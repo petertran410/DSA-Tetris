@@ -278,3 +278,135 @@ let drawCurrentTetris = () => {
     }
   }
 };
+
+let drawSquares = () => {
+  for (let i = 0; i < gameMap.length; i++) {
+    let t = gameMap[i];
+    for (let j = 0; j < t.length; j++) {
+      if (t[j].imageX == -1) continue;
+      ctx.drawImage(
+        image,
+        t[j].imageX,
+        t[j].imageY,
+        imageSquareSize,
+        imageSquareSize,
+        j * size,
+        i * size,
+        size,
+        size
+      );
+    }
+  }
+};
+
+let drawNextShape = () => {
+  nctx.fillStyle = "#bca0dc";
+  nctx.fillRect(0, 0, nextShapeCanvas.width, nextShapeCanvas.height);
+  for (let i = 0; i < nextShape.template.length; i++) {
+    for (let j = 0; j < nextShape.template.length; j++) {
+      if (nextShape.template[i][j] == 0) continue;
+      nctx.drawImage(
+        image,
+        nextShape.imageX,
+        nextShape.imageY,
+        imageSquareSize,
+        imageSquareSize,
+        size * i,
+        size * j + size,
+        size,
+        size
+      );
+    }
+  }
+};
+
+let drawScore = () => {
+  sctx.clearRect(0, 0, scoreCanvas.width, scoreCanvas.height);
+  sctx.font = "64px Poppins";
+  sctx.fillStyle = "black";
+  sctx.fillText(score, 10, 50);
+};
+
+let drawGameOver = () => {
+  ctx.font = "64px Poppins";
+  ctx.fillStyle = "black";
+  ctx.fillText("Game Over!", 10, canvas.height / 2);
+};
+
+let draw = () => {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawBackground();
+  drawSquares();
+  drawCurrentTetris();
+  drawNextShape();
+  drawScore();
+  if (gameOver) {
+    drawGameOver();
+  }
+};
+
+let getRandomShape = () => {
+  return Object.create(shapes[Math.floor(Math.random() * shapes.length)]);
+};
+let resetVars = () => {
+  initialTwoDArr = [];
+  for (let i = 0; i < squareCountY; i++) {
+    let temp = [];
+    for (let j = 0; j < squareCountX; j++) {
+      temp.push({ imageX: -1, imageY: -1 });
+    }
+    initialTwoDArr.push(temp);
+  }
+  score = 0;
+  gameOver = false;
+  currentShape = getRandomShape();
+  nextShape = getRandomShape();
+  gameMap = initialTwoDArr;
+};
+
+window.addEventListener("keydown", (event) => {
+  if (event.keyCode == 37) currentShape.moveLeft();
+  else if (event.keyCode == 38) currentShape.changeRotation();
+  else if (event.keyCode == 39) currentShape.moveRight();
+  else if (event.keyCode == 40) currentShape.moveBottom();
+});
+
+let gameMapStack = [];
+
+let undo = () => {
+  if (gameMapStack.length > 0) {
+    gameMap = gameMapStack.pop();
+    draw();
+  }
+};
+
+let saveGameState = () => {
+  let gameState = [];
+  for (let i = 0; i < gameMap.length; i++) {
+    gameState.push(gameMap[i].slice());
+  }
+  gameMapStack.push(gameState);
+};
+
+window.addEventListener("keydown", (event) => {
+  if (event.keyCode == 37) {
+    currentShape.moveLeft();
+    saveGameState();
+  } else if (event.keyCode == 38) {
+    currentShape.changeRotation();
+    saveGameState();
+  } else if (event.keyCode == 39) {
+    currentShape.moveRight();
+    saveGameState();
+  } else if (event.keyCode == 40) {
+    currentShape.moveBottom();
+    saveGameState();
+  }
+});
+
+document.getElementById("undo-button").addEventListener("click", () => {
+  undo();
+});
+
+resetVars();
+gameLoop();
