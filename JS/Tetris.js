@@ -172,3 +172,109 @@ const shapes = [
     [0, 1, 1],
   ]),
 ];
+
+let gameMap;
+let gameOver;
+let currentShape;
+let nextShape;
+let score;
+let initialTwoDArr;
+let whiteLineThickness = 4;
+
+let gameLoop = () => {
+  setInterval(update, 1000 / gameSpeed);
+  setInterval(draw, 1000 / framePerSecond);
+};
+
+let deleteCompleteRows = () => {
+  for (let i = 0; i < gameMap.length; i++) {
+    let t = gameMap[i];
+    let isComplete = true;
+    for (let j = 0; j < t.length; j++) {
+      if (t[j].imageX == -1) isComplete = false;
+    }
+    if (isComplete) {
+      console.log("complete row");
+      score += 1000;
+      for (let k = i; k > 0; k--) {
+        gameMap[k] = gameMap[k - 1];
+      }
+      let temp = [];
+      for (let j = 0; j < squareCountX; j++) {
+        temp.push({ imageX: -1, imageY: -1 });
+      }
+      gameMap[0] = temp;
+    }
+  }
+};
+
+let update = () => {
+  if (gameOver) return;
+  if (currentShape.checkBottom()) {
+    currentShape.y += 1;
+  } else {
+    for (let k = 0; k < currentShape.template.length; k++) {
+      for (let l = 0; l < currentShape.template.length; l++) {
+        if (currentShape.template[k][l] == 0) continue;
+        gameMap[currentShape.getTruncedPosition().y + l][
+          currentShape.getTruncedPosition().x + k
+        ] = { imageX: currentShape.imageX, imageY: currentShape.imageY };
+      }
+    }
+
+    deleteCompleteRows();
+    currentShape = nextShape;
+    nextShape = getRandomShape();
+    if (!currentShape.checkBottom()) {
+      gameOver = true;
+    }
+    score += 100;
+  }
+};
+
+let drawRect = (x, y, width, height, color) => {
+  ctx.fillStyle = color;
+  ctx.fillRect(x, y, width, height);
+};
+
+let drawBackground = () => {
+  drawRect(0, 0, canvas.width, canvas.height, "#bca0dc");
+  for (let i = 0; i < squareCountX + 1; i++) {
+    drawRect(
+      size * i - whiteLineThickness,
+      0,
+      whiteLineThickness,
+      canvas.height,
+      "white"
+    );
+  }
+
+  for (let i = 0; i < squareCountY + 1; i++) {
+    drawRect(
+      0,
+      size * i - whiteLineThickness,
+      canvas.width,
+      whiteLineThickness,
+      "white"
+    );
+  }
+};
+
+let drawCurrentTetris = () => {
+  for (let i = 0; i < currentShape.template.length; i++) {
+    for (let j = 0; j < currentShape.template.length; j++) {
+      if (currentShape.template[i][j] == 0) continue;
+      ctx.drawImage(
+        image,
+        currentShape.imageX,
+        currentShape.imageY,
+        imageSquareSize,
+        imageSquareSize,
+        Math.trunc(currentShape.x) * size + size * i,
+        Math.trunc(currentShape.y) * size + size * j,
+        size,
+        size
+      );
+    }
+  }
+};
